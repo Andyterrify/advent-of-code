@@ -1,0 +1,145 @@
+use std::{
+    collections::{hash_map::ValuesMut, BTreeMap},
+    env::vars,
+    vec,
+};
+
+fn main() {
+    let input = include_str!("./input1.txt");
+    let output = process(input);
+    dbg!(output);
+
+    // 2286 is too low
+    // 2248 is too low
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Value {
+    Empty,
+    Symbol,
+    Number(u32),
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Coord {
+    x: usize,
+    y: usize,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Point {
+    coord: Coord,
+    value: Value,
+}
+
+fn process(input: &str) -> String {
+    let mut matrix: Vec<Point> = input
+        .lines()
+        .enumerate()
+        .flat_map(|(y, row)| {
+            row.chars().enumerate().map(move |(x, c)| Point {
+                coord: Coord { y, x },
+                value: match c {
+                    '.' => Value::Empty,
+                    c if c.is_ascii_digit() => {
+                        Value::Number(c.to_digit(10).expect("Should not failt"))
+                    }
+                    _ => Value::Symbol,
+                },
+            })
+        })
+        .collect();
+
+    let numbers = matrix.iter().filter(|v| match v.value {
+        Value::Number(_) => true,
+        _ => false,
+    });
+
+    let mut grouped_numbers: Vec<Vec<Point>> = vec![vec![]];
+
+    for next in numbers {
+        if grouped_numbers.last().is_none() {
+            grouped_numbers.push(vec![*next])
+        };
+
+        let last_group: &mut Vec<Point> = grouped_numbers.last_mut().unwrap();
+        let last = last_group.last_mut().expect("This should be an element");
+
+        if last.coord.x == (next.coord.x - 1) {
+            let last_x = match last.value {
+                Value::Number(n) => n,
+                _ => unreachable!("This should never reach"),
+            };
+            let next_x = match next.value {
+                Value::Number(n) => n,
+                _ => unreachable!("This should never reach"),
+            };
+
+            last.value =Value::Number(last_x * 10 + next_x);
+ 
+        } else {
+            grouped_numbers.push(vec![*next])
+        }
+    }
+
+    grouped_numbers.iter().for_each(|x| {
+        x.iter().for_each(|y| {
+            println!(
+                "Coord: ({}, {}), Value: {}",
+                y.coord.x,
+                y.coord.y,
+                match y.value {
+                    Value::Empty => "Empty".to_string(),
+                    Value::Symbol => "Symbol".to_string(),
+                    Value::Number(n) => n.to_string(),
+                }
+            )
+        })
+    });
+
+    // numbers.iter().enumerate().for_each(|(index, p)| {
+    //     let next = numbers[index + 1];
+    //     if p.coord.x == (next.coord.x - 1) {
+    //         let orig = match p.value {
+    //             Value::Number(n) => n,
+    //             _ => 0,
+    //         };
+    //         let next = match next.value {
+    //             Value::Number(n) => n,
+    //             _ => 0,
+    //         };
+    //
+    //         let c = orig * 10 + next;
+    //         let point = Point {
+    //             coord: p.coord,
+    //             value: Value::Number(c)
+    //         };
+    //
+    //         numbers[index+1] = point
+    //     }
+    // });
+
+    todo!()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_input() {
+        let result = process(
+            "467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..",
+        );
+        assert_eq!("4361", result);
+    }
+}
