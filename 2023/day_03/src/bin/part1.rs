@@ -1,4 +1,3 @@
-
 fn main() {
     let input = include_str!("./input1.txt");
     let output = process(input);
@@ -90,41 +89,46 @@ fn process(input: &str) -> String {
 
     grouped_numbers.iter().for_each(|x| {
         let _a = get_box(x);
-        
     });
 
-    grouped_numbers.iter().map(|point|{
+    grouped_numbers
+        .iter()
+        .map(|point| {
+            let (p1, p2) = get_box(point);
 
-        let (p1, p2) = get_box(point);
+            let has_symbol = matrix
+                .iter()
+                .filter(|x| {
+                    if p1.x <= x.coord.x
+                        && x.coord.x <= p2.x
+                        && p1.y <= x.coord.y
+                        && x.coord.y <= p2.y
+                    {
+                        match x.value {
+                            Value::Symbol => true,
+                            _ => false,
+                        }
+                    } else {
+                        false
+                    }
+                })
+                .count()
+                > 0;
 
-        let has_symbol = matrix.iter().filter(|x| {
-            if p1.x <= x.coord.x && x.coord.x <= p2.x && p1.y <= x.coord.y && x.coord.y <= p2.y {
-                match x.value {
-                    Value::Symbol => true,
-                    _ => false
+            if has_symbol {
+                match point.value {
+                    Value::Number(n) => n,
+                    _ => unreachable!("This should not reach"),
                 }
-            }else{
-                false
+            } else {
+                0
             }
-        }).count() > 0;
-
-        if has_symbol {
-            match point.value {
-               Value::Number(n) => n,
-                _ => unreachable!("This should not reach")
-            }
-        }
-        else{
-            0
-        }
-
-    }).sum::<u32>().to_string()
+        })
+        .sum::<u32>()
+        .to_string()
 }
 
 fn get_box(point: &Point) -> (Coord, Coord) {
-    
-    
-
     let p1: Coord = Coord {
         x: point.coord.x.saturating_sub(match point.value {
             Value::Number(n) => n.to_string().len(),
